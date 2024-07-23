@@ -1,5 +1,6 @@
 package io.app.exception;
 
+import io.app.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -19,9 +20,25 @@ public class GlobalExceptionHandler {
 		return map;
 	}
 
+	@ExceptionHandler(TokenNotFoundException.class)
+	public Map<String,HttpStatus> handleTokenNotFoundException(Exception ex){
+		Map<String,HttpStatus> map = new HashMap<>();
+		map.put("Token Not Found",HttpStatus.NOT_FOUND);
+		return map;
+	}
+
+
 	@ExceptionHandler(SignatureException.class)
 	public String handleSignatureException(SignatureException ex){
 		return "Please provide a valid token";
+	}
+
+	@ExceptionHandler(MitchMatchException.class)
+	public ApiResponse handleMitchMatchException(MitchMatchException ex){
+		return ApiResponse.builder()
+				.msg(ex.getMessage())
+				.status(false)
+				.build();
 	}
 
 
