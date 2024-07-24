@@ -33,6 +33,9 @@ public class User implements UserDetails {
 	private Roles roles=Roles.USER;
 	@Column(nullable = false)
 	private String password;
+	@OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+	private Set<Task> tasks=new HashSet<>();
+
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
