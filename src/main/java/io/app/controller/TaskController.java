@@ -28,6 +28,16 @@ public class TaskController {
 	}
 
 
+	@GetMapping("/{id}")
+	@ResponseStatus(HttpStatus.OK)
+	public TaskDto getTaskById(
+			@RequestHeader("Authorization") String token,
+			@PathVariable String id){
+		token=token.substring(7);
+		return service.getTaskById(token,id);
+	}
+
+
 	@GetMapping
 	public ResponseEntity<Page<TaskDto>> usersTasks(
 			@RequestHeader("Authorization") String token,
@@ -40,11 +50,29 @@ public class TaskController {
 
 	@PatchMapping("/do-task-complete/{taskId}")
 	public ResponseEntity<ApiResponse> doTaskComplete(
+			@RequestHeader("Authorization") String token,
 			@PathVariable String taskId
 	){
-		return ResponseEntity.ok(service.doTaskCompleted(taskId));
+		token=token.substring(7);
+		return ResponseEntity.ok(service.doTaskCompleted(token,taskId));
 	}
 
+	@PutMapping("/update-task/{id}")
+	@ResponseStatus(HttpStatus.OK)
+	public ApiResponse updateTask(
+			@RequestHeader("Authorization") String token,
+			@PathVariable String id,
+			@RequestBody TaskDto taskDto){
+		token=token.substring(7);
+		return service.updateTask(token,id,taskDto);
+	}
 
+	@DeleteMapping("delete-task/{id}")
+	public ApiResponse delteTask(
+			@RequestHeader("Authorization") String token,
+			@PathVariable String id){
+		token=token.substring(7);
+		return service.deleteTask(token,id);
+	}
 
 }
