@@ -3,6 +3,7 @@ package io.app.exception;
 import io.app.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.security.SignatureException;
@@ -41,6 +42,13 @@ public class GlobalExceptionHandler {
 				.build();
 	}
 
-
+	@ExceptionHandler(UnAuthorizeUserException.class)
+	@ResponseStatus(HttpStatus.UNAUTHORIZED)
+	public ApiResponse handleUnAuthorizeException(UnAuthorizeUserException ex){
+		return ApiResponse.builder()
+				.msg(ex.getMessage())
+				.status(false)
+				.build();
+	}
 
 }

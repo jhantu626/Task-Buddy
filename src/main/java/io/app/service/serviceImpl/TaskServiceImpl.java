@@ -3,6 +3,7 @@ package io.app.service.serviceImpl;
 import io.app.dto.ApiResponse;
 import io.app.dto.TaskDto;
 import io.app.exception.ResourceNotFoundException;
+import io.app.exception.UnAuthorizeUserException;
 import io.app.model.Task;
 import io.app.model.User;
 import io.app.repository.TaskRepository;
@@ -44,11 +45,23 @@ public class TaskServiceImpl implements TaskService {
 	}
 
 	@Override
+	public TaskDto getTaskById(String token, String id) {
+		String email=jwtService.extractUsername(token);
+		Task task=repository.findById(id)
+				.orElseThrow(()->new ResourceNotFoundException("Resource Not Found!"));
+		if (!task.getUser().getEmail().equals(email)){
+			throw new UnAuthorizeUserException("UnAuthorized User!");
+		}
+		TaskDto taskDto=modelMapper.map(task,TaskDto.class);
+		return taskDto;
+	}
+
+	@Override
 	public Page<TaskDto> usersTask(String token,int page,int size) {
 		String email=jwtService.extractUsername(token);
 		User user=userService.getUserByEmail(email);
 		Pageable pageable = PageRequest.of(page,size);
-		Page<Task> res=repository.findByUser(user,pageable);
+		List<Task> res=repository.findByUser(user);
 		List<TaskDto> finalRes=res.stream()
 				.map((task -> modelMapper.map(task,TaskDto.class)))
 				.collect(Collectors.toList());
@@ -57,9 +70,15 @@ public class TaskServiceImpl implements TaskService {
 	}
 
 	@Override
-	public ApiResponse doTaskCompleted(String id) {
+	public ApiResponse doTaskCompleted(String token,String id) {
 		Task task=repository.findById(id)
 				.orElseThrow(()->new ResourceNotFoundException("Invalid Task Id!"));
+
+		String userEmail=jwtService.extractUsername(token);
+		if (!task.getUser().getEmail().equals(userEmail)){
+			throw new UnAuthorizeUserException("UnAuthorized User!");
+		}
+
 		task.setCompleted(true);
 		repository.save(task);
 		return ApiResponse.builder()
@@ -67,5 +86,70 @@ public class TaskServiceImpl implements TaskService {
 				.status(true)
 				.build();
 	}
+
+	@Override
+	public ApiResponse updateTask(String token, String id, TaskDto taskDto) {
+		String userEmail=jwtService.extractUsername(token);
+		Task task=repository.findById(id)
+				.orElseThrow(()->new ResourceNotFoundException("Resource Not Found!"));
+		if (!task.getUser().getEmail().equals(userEmail)){
+			throw new UnAuthorizeUserException("UnAuthorized User!");
+		}
+		task.setTitle(taskDto.getTitle()!=null?taskDto.getTitle():task.getTitle());
+		task.setDescription(taskDto.getDescription()!=null?taskDto.getDescription():task.getDescription());
+		task.setCategory(taskDto.getCategory()!=null?taskDto.getCategory():task.getCategory());
+		task.setScheduleTime(taskDto.getScheduleTime()!=null?taskDto.getScheduleTime():task.getScheduleTime());
+		task.setUpdatedAt(LocalDateTime.now());
+		repository.save(task);
+		return ApiResponse.builder()
+				.msg("Task updated successfully!")
+				.status(true)
+				.build();
+	}
+
+	@Override
+	public ApiResponse deleteTask(String token, String id) {
+		String userEmail=jwtService.extractUsername(token);
+		Task task=repository.findById(id)
+				.orElseThrow(()->new ResourceNotFoundException("Resource Not Found!"));
+		if (!task.getUser().getEmail().equals(userEmail)){
+			throw new UnAuthorizeUserException("UnAuthorized user!");
+		}
+		repository.delete(task);
+		return ApiResponse.builder()
+				.msg("Task Deleted Successfully!")
+				.status(true)
+				.build();
+	}
+
+	@Override
+	public Page<TaskDto> getTaskByTitle(String token, String title,
+										int pageNo,int pageSize) {
+		String email=jwtService.extractUsername(token);
+		User user=userService.getUserByEmail(email);
+		List<Task> tasks=repository.findByTitleContainingAndUser(title,user);
+		List<TaskDto> taskDtos=tasks.parallelStream().map((task)->modelMapper.map(task, TaskDto.class))
+				.collect(Collectors.toList());
+		Pageable pageable=PageRequest.of(pageNo,pageSize, Sort.by("scheduleTime")
+				.ascending());
+		Page<TaskDto> res=new PageImpl<>(taskDtos,pageable,taskDtos.size());
+		return res;
+	}
+
+	@Override
+	public Page<TaskDto> getTaskByCategory(String token, String category,
+										   int pageNo,int pageSize) {
+		String email=jwtService.extractUsername(token);
+		User user=userService.getUserByEmail(email);
+		List<Task> tasks=repository.findByCategoryAndUser(category,user);
+		List<TaskDto> taskDtos=tasks.stream().map((task)->modelMapper.map(task,TaskDto.class))
+				.collect(Collectors.toList());
+		Pageable pageable = PageRequest.of(pageNo,pageSize,Sort.by("scheduleTime")
+				.ascending());
+		//Converting List<TaskDto> to Page<TaskDto>
+		Page<TaskDto> page = new PageImpl<>(taskDtos,pageable,taskDtos.size());
+		return page;
+	}
+
 
 }
