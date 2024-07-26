@@ -3,17 +3,18 @@ package io.app.controller;
 import io.app.dto.ApiResponse;
 import io.app.dto.TaskDto;
 import io.app.service.serviceImpl.TaskServiceImpl;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
-@RequestMapping("/task")
+@RequestMapping("api/v1/task")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "authenticationBearer")
 public class TaskController {
 	private final TaskServiceImpl service;
 
@@ -42,9 +43,10 @@ public class TaskController {
 	public ResponseEntity<Page<TaskDto>> usersTasks(
 			@RequestHeader("Authorization") String token,
 			@RequestParam(required = false,defaultValue = "0") int page,
-			@RequestParam(required = false,defaultValue = "10") int size){
+			@RequestParam(required = false,defaultValue = "10") int size,
+			@RequestParam(required = false, defaultValue = "true") boolean ascending){
 		token=token.substring(7);
-		return ResponseEntity.ok(service.usersTask(token,page,size));
+		return ResponseEntity.ok(service.usersTask(token,page,size,ascending));
 	}
 
 
@@ -73,6 +75,46 @@ public class TaskController {
 			@PathVariable String id){
 		token=token.substring(7);
 		return service.deleteTask(token,id);
+	}
+
+	@GetMapping("/get-task-by-title")
+	public Page<TaskDto> getTaskByTitile(
+			@RequestHeader("Authorization") String token,
+			@RequestParam(name = "title") String title,
+			@RequestParam(required = false, defaultValue = "0") int pageNo,
+			@RequestParam(required = false, defaultValue = "10") int pageSize,
+			@RequestParam(required = false,defaultValue = "true") boolean ascending
+	){
+		token=token.substring(7);
+		return service.getTaskByTitle(token,title,pageNo,pageSize,ascending);
+	}
+
+	@GetMapping("/get-task-by-category")
+	@ResponseStatus(HttpStatus.OK)
+	public Page<TaskDto> getTaskByCategory(
+			@RequestHeader("Authorization") String token,
+			@RequestParam(name = "category") String category,
+			@RequestParam(required = false, defaultValue = "0") int pageNo,
+			@RequestParam(required = false, defaultValue = "10") int pageSize,
+			@RequestParam(required = false,defaultValue = "true") boolean ascending
+	){
+		token=token.substring(7);
+		return service.getTaskByCategory(token,category,pageNo,pageSize,ascending);
+	}
+
+	@GetMapping("/task-by-complete")
+	@ResponseStatus(HttpStatus.OK)
+	public Page<TaskDto> getTaskByIsCompleted(
+			@RequestHeader("Authorization") String token,
+			@RequestParam(name = "complete-task",defaultValue = "false",required = false)
+			boolean isCompleted,
+			@RequestParam(name = "pageNo",required = false,
+					defaultValue = "0") int pageNo,
+			@RequestParam(name = "pageSize",required = false,
+			defaultValue = "10") int pageSize,
+			@RequestParam(required = false,defaultValue = "true") boolean ascending){
+		token=token.substring(7);
+		return service.getCompleteAndInCompleteTask(token,isCompleted,pageNo,pageSize,ascending);
 	}
 
 }
