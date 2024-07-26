@@ -4,6 +4,7 @@ import io.app.dto.ApiResponse;
 import io.app.exception.TokenNotFoundException;
 import io.app.model.User;
 import io.app.service.serviceImpl.UserServiceImpl;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,8 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/api/v1/user")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "authenticationBearer")
 public class UserController {
 	private final UserServiceImpl userService;
 

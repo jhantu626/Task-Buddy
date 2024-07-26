@@ -7,11 +7,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task,String> {
-	List<Task> findByUser(User user);
-	List<Task> findByTitleContainingAndUser(String title,User user);
-	List<Task> findByCategoryAndUser(String category,User user);
+	Page<Task> findByUser(User user,Pageable pageable);
+	Page<Task> findByTitleContainingAndUser(String title,User user,Pageable pageable);
+	Page<Task> findByCategoryAndUser(String category,User user,Pageable pageable);
+	Page<Task> findByIsCompletedAndUser(boolean isComplete,User user,Pageable pageable);
 }

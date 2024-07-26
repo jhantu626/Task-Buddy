@@ -18,14 +18,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Date;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 @Slf4j
 public class AuthController {
 	private final AuthService authService;
 	private final AuthenticationManager authenticationManager;
 
-	@PostMapping("/register")
+	@PostMapping("register")
 	public ResponseEntity<ResponseToken> register(@RequestBody User user,
 												  HttpServletRequest request){
 		log.info("Request URI ({}) AT [{}]", request.getRequestURI(), new Date().toLocaleString());

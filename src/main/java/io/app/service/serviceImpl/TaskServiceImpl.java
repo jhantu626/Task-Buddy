@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,15 +58,16 @@ public class TaskServiceImpl implements TaskService {
 	}
 
 	@Override
-	public Page<TaskDto> usersTask(String token,int page,int size) {
+	public Page<TaskDto> usersTask(String token,int page,int size,boolean ascending) {
 		String email=jwtService.extractUsername(token);
 		User user=userService.getUserByEmail(email);
-		Pageable pageable = PageRequest.of(page,size);
-		List<Task> res=repository.findByUser(user);
+		Sort sort=ascending?Sort.by("scheduleTime").ascending():Sort.by("scheduleTime").descending();
+		Pageable pageable = PageRequest.of(page,size,sort);
+		Page<Task> res=repository.findByUser(user,pageable);
 		List<TaskDto> finalRes=res.stream()
 				.map((task -> modelMapper.map(task,TaskDto.class)))
 				.collect(Collectors.toList());
-		Page<TaskDto> resPage=new PageImpl<>(finalRes,pageable,finalRes.size());
+		Page<TaskDto> resPage=new PageImpl<>(finalRes,pageable,res.getTotalElements());
 		return resPage;
 	}
 
@@ -124,31 +126,50 @@ public class TaskServiceImpl implements TaskService {
 
 	@Override
 	public Page<TaskDto> getTaskByTitle(String token, String title,
-										int pageNo,int pageSize) {
+										int pageNo,int pageSize,boolean ascending) {
 		String email=jwtService.extractUsername(token);
 		User user=userService.getUserByEmail(email);
-		List<Task> tasks=repository.findByTitleContainingAndUser(title,user);
-		List<TaskDto> taskDtos=tasks.parallelStream().map((task)->modelMapper.map(task, TaskDto.class))
+		Sort sort=ascending?Sort.by("scheduleTime").ascending():Sort.by("scheduleTime").descending();
+		Pageable pageable=PageRequest.of(pageNo,pageSize, sort);
+		Page<Task> tasks=repository.findByTitleContainingAndUser(title,user,pageable);
+		List<TaskDto> taskDtos=tasks.stream().map((task)->modelMapper.map(task, TaskDto.class))
 				.collect(Collectors.toList());
-		Pageable pageable=PageRequest.of(pageNo,pageSize, Sort.by("scheduleTime")
-				.ascending());
-		Page<TaskDto> res=new PageImpl<>(taskDtos,pageable,taskDtos.size());
+		Page<TaskDto> res=new PageImpl<>(taskDtos,pageable,tasks.getTotalElements());
 		return res;
 	}
 
 	@Override
 	public Page<TaskDto> getTaskByCategory(String token, String category,
-										   int pageNo,int pageSize) {
+										   int pageNo,int pageSize,boolean ascending) {
 		String email=jwtService.extractUsername(token);
 		User user=userService.getUserByEmail(email);
-		List<Task> tasks=repository.findByCategoryAndUser(category,user);
+		Sort sort=ascending?Sort.by("scheduleTime").ascending():Sort.by("scheduleTime").descending();
+		Pageable pageable = PageRequest.of(pageNo,pageSize,sort);
+		Page<Task> tasks=repository.findByCategoryAndUser(category,user,pageable);
 		List<TaskDto> taskDtos=tasks.stream().map((task)->modelMapper.map(task,TaskDto.class))
 				.collect(Collectors.toList());
-		Pageable pageable = PageRequest.of(pageNo,pageSize,Sort.by("scheduleTime")
-				.ascending());
 		//Converting List<TaskDto> to Page<TaskDto>
-		Page<TaskDto> page = new PageImpl<>(taskDtos,pageable,taskDtos.size());
+		Page<TaskDto> page = new PageImpl<>(taskDtos,pageable,tasks.getTotalElements());
 		return page;
+	}
+
+	@Override
+	public Page<TaskDto> getCompleteAndInCompleteTask(String token,
+													  boolean isComplete,
+													  int pageNo,
+													  int pageSize,
+													  boolean ascending) {
+		String email=jwtService.extractUsername(token);
+		User user=userService.getUserByEmail(email);
+		Sort sort=ascending?Sort.by("scheduleTime").ascending():
+				Sort.by("scheduleTime").descending();
+		Pageable pageable=PageRequest.of(pageNo,pageSize,sort);
+		Page<Task> tasks=repository.findByIsCompletedAndUser(isComplete,user,pageable);
+		List<TaskDto> taskDtos=tasks.stream()
+				.map((task)->modelMapper.map(task,TaskDto.class))
+				.collect(Collectors.toList());
+		Page<TaskDto> res=new PageImpl<>(taskDtos,pageable,tasks.getTotalElements());
+		return res;
 	}
 
 
