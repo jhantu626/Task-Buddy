@@ -38,7 +38,7 @@ TaskBuddy is a task management application built using Spring Boot, providing fe
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/jhantubala626/TaskBuddy.git
+[git clone https://github.com/jhantubala626/TaskBuddy.git](https://github.com/jhantu626/Task-Buddy.git)
 ```
 
 2. Navigate to the project directory:
